@@ -1,0 +1,12 @@
+[build]
+cmd = "go build -o main ."
+bin = "./main"
+include_dir = ["."]
+exclude_dir = ["assets", "vendor"]
+include_ext = ["go"]
+
+[log]
+time = true
+
+[watch]
+cmd = "go run main.go"

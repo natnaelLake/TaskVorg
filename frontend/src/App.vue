@@ -1,8 +1,10 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue';
-import ExampleComponent from './components/ExampleComponent.vue'
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <ExampleComponent />
+  <div class="container mx-auto p-4">
+    <RouterView />
+  </div>
 </template>
+
