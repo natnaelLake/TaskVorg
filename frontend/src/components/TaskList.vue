@@ -21,7 +21,7 @@
 <script>
 import { ref, watchEffect } from 'vue';
 import { useQuery } from '@vue/apollo-composable';
-import { gql, } from '@apollo/client/core';
+import { gql } from '@apollo/client/core';
 
 const GET_TASKS = gql`
   query GetTasks {
@@ -49,7 +49,7 @@ export default {
         return;
       }
       if (result.value && result.value.tasks) {
-        console.log('-----------------')
+        console.log('-----------------',result.value.tasks)
         tasks.value = result.value.tasks;
       }
     });
