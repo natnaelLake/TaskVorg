@@ -1,43 +1,94 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold">Create Task</h1>
-    <VForm @submit="submitForm">
+  <div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">
+      Create Task
+    </h1>
+    <form
+      @submit.prevent="submitForm"
+      class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md"
+    >
       <div class="mb-4">
-        <label for="title" class="block text-gray-700">Title</label>
-        <Field id="title" name="title" as="input" class="mt-1 block w-full" :rules="yup.string().required()" />
-        <ErrorMessage name="title" />
+        <label for="title" class="block text-sm font-medium text-gray-700"
+          >Title</label
+        >
+        <input
+          v-model="title"
+          id="title"
+          type="text"
+          class="form-input"
+          placeholder="Enter task title"
+          required
+        />
       </div>
-
       <div class="mb-4">
-        <label for="description" class="block text-gray-700">Description</label>
-        <Field id="description" name="description" as="textarea" class="mt-1 block w-full" :rules="yup.string().required()" />
-        <ErrorMessage name="description" />
+        <label for="description" class="block text-sm font-medium text-gray-700"
+          >Description</label
+        >
+        <textarea
+          v-model="description"
+          id="description"
+          class="form-input"
+          placeholder="Enter task description"
+          rows="4"
+          required
+        ></textarea>
       </div>
-
       <div class="mb-4">
-        <label for="status" class="block text-gray-700">Status</label>
-        <Field id="status" name="status" as="select" class="mt-1 block w-full" :rules="yup.string().required()">
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-        </Field>
-        <ErrorMessage name="status" />
+        <label for="status" class="block text-sm font-medium text-gray-700"
+          >Status</label
+        >
+        <input
+          v-model="status"
+          id="status"
+          type="text"
+          class="form-input"
+          placeholder="Enter task status"
+          required
+        />
       </div>
-
-      <button type="submit" class="btn">Create Task</button>
-    </VForm>
+      <div class="mb-4">
+        <label for="image" class="block text-sm font-medium text-gray-700"
+          >Image</label
+        >
+        <input
+          id="image"
+          type="file"
+          @change="handleFileChange"
+          class="form-input"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Create Task</button>
+    </form>
+    <div v-if="error" class="mt-4 text-center text-red-500">
+      {{ error.message }}
+    </div>
   </div>
 </template>
 
 <script>
-import { useMutation } from '@vue/apollo-composable';
-import { gql } from '@apollo/client/core';
-import { ref } from 'vue';
-import { Field, ErrorMessage, Form as VForm } from 'vee-validate';
-import * as yup from 'yup';
+import { ref } from "vue";
+import { useMutation } from "@vue/apollo-composable";
+import { gql } from "@apollo/client/core";
+import axios from "axios";
+import { useRouter } from 'vue-router';
 
 const CREATE_TASK = gql`
-  mutation CreateTask($title: String!, $description: String!, $status: String!, $userId: String!) {
-    insert_tasks(objects: { title: $title, description: $description, status: $status, userId: $userId }) {
+  mutation CreateTask(
+    $title: String!
+    $description: String!
+    $status: String!
+    $image_url: String!
+    $user_id: Int!
+  ) {
+    insert_tasks(
+      objects: {
+        title: $title
+        description: $description
+        status: $status
+        user_id: $user_id
+        image_url: $image_url
+      }
+    ) {
       returning {
         id
         title
@@ -45,6 +96,7 @@ const CREATE_TASK = gql`
         status
         created_at
         updated_at
+        image_url
       }
     }
   }
@@ -52,28 +104,68 @@ const CREATE_TASK = gql`
 
 export default {
   setup() {
-    const userId = ref('user-123'); // Replace with actual user ID
+    const router = useRouter();
+    const title = ref("");
+    const description = ref("");
+    const status = ref("");
+    const user_id = ref(1);
+    const image = ref(null);
+    const error = ref(null);
     const { mutate } = useMutation(CREATE_TASK);
 
-    const submitForm = async (values) => {
-      await mutate({ ...values, userId: userId.value });
-      // Redirect or notify user after success
+    const handleFileChange = (event) => {
+      image.value = event.target.files[0];
+    };
+
+    const submitForm = async () => {
+      try {
+        let imageUrl = "";
+        if (image.value) {
+          const formData = new FormData();
+          formData.append("file", image.value);
+          const response = await axios.post(
+            "http://localhost:8081/uploads",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+          imageUrl = response.data.url;
+        }
+        console.log("+++++++++++++++++++++", imageUrl);
+        await mutate({
+          title: title.value,
+          description: description.value,
+          status: status.value,
+          image_url: imageUrl,
+          user_id: user_id.value
+        });
+        router.push('/');
+      } catch (e) {
+        error.value = e.message;
+        console.error("Submit Error:", e);
+      }
     };
 
     return {
+      title,
+      description,
+      status,
+      handleFileChange,
       submitForm,
+      error,
     };
-  },
-  components: {
-    Field,
-    ErrorMessage,
-    VForm,
   },
 };
 </script>
 
 <style scoped>
-.btn {
+.form-input {
+  @apply border border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+.btn-primary {
   @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
 }
 </style>

@@ -21,10 +21,10 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // w.Header().Set("Content-Type", "application/json")
     if err := json.NewEncoder(w).Encode(map[string]interface{}{
         "data": response.Data,
-    }); err != nil {
+    });
+	 err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
 }
